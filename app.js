@@ -119,7 +119,14 @@ app.post('/signupSubmit', async (req, res) => {
     });
     console.log("Inserted user");
 
-    res.redirect('/login');
+    // Log the user in by setting session variables
+    req.session.authenticated = true;
+    req.session.email = email;
+    req.session.name = name;
+    req.session.cookie.maxAge = expireTime;
+
+    // Redirect to the members area
+    res.redirect('/members');
 });
 
 app.post('/loggingin', async (req, res) => {
