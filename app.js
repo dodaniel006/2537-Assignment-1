@@ -179,7 +179,7 @@ app.get('/members', (req, res) => {
     let imagePath;
 
     if (imageNumber == 0) {
-        imagePath = '/dog1.jpg';
+        imagePath = '/dog1.png';
     } else if (imageNumber == 1) {
         imagePath = '/dog2.png';
     } else if (imageNumber == 2) {
