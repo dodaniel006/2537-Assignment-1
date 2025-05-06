@@ -150,7 +150,6 @@ app.post('/loggingin', async (req, res) => {
         req.session.email = email;
         req.session.name = result[0].name;
         req.session.cookie.maxAge = expireTime;
-        req.session.randNum = Math.floor(Math.random() * 3); // Random number between 0 and 2
 
         res.redirect('/members');
         return;
