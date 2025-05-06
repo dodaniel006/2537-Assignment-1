@@ -154,6 +154,7 @@ app.post('/loggingin', async (req, res) => {
         if (!req.session.randNum) {
             req.session.randNum = Math.floor(Math.random() * 3); // Random number between 0 and 2
         }
+        console.log("Session created for user:", req.session.randNum);
 
         res.redirect('/members');
         return;
@@ -174,6 +175,7 @@ app.get('/members', (req, res) => {
     }
 
     let imageNumber = req.session.randNum;
+    console.log("Image number:", imageNumber);
     let imagePath;
 
     switch (imageNumber) {
