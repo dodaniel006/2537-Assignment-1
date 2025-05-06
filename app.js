@@ -13,7 +13,6 @@ const app = express();
 
 const expireTime = 1 * 60 * 60 * 1000; //expires after 1 hour (hours * minutes * seconds * millis)
 
-const mongodb_host = process.env.MONGODB_HOST;
 const mongodb_user = process.env.MONGODB_USER;
 const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_database = process.env.MONGODB_DATABASE;
@@ -151,9 +150,7 @@ app.post('/loggingin', async (req, res) => {
         req.session.email = email;
         req.session.name = result[0].name;
         req.session.cookie.maxAge = expireTime;
-        if (!req.session.randNum) {
-            req.session.randNum = Math.floor(Math.random() * 3); // Random number between 0 and 2
-        }
+        req.session.randNum = Math.floor(Math.random() * 3); // Random number between 0 and 2
 
         res.redirect('/members');
         return;
