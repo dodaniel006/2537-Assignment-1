@@ -106,6 +106,7 @@ app.post('/signupSubmit', async (req, res) => {
     // Validate the input data using Joi
     const valid = schema.validate({ name, password, email });
     if (valid.error != null) { // If there is an error in validation
+        console.log(valid.error);
         res.status(400).send(errorMessage(valid.error, 'signup'));
         return;
     } // All inputs are valid
@@ -140,7 +141,7 @@ app.post('/loggingin', async (req, res) => {
     const result = await userCollection.find({ email: email }).project({ email: 1, password: 1, name: 1, _id: 1 }).toArray();
 
     if (result.length != 1) {
-        res.status(401).send(errorMessage('Error: User not found!'), 'login');
+        res.status(401).send(errorMessage('Error: User not found!', 'login'));
         return;
     }
 
@@ -159,7 +160,7 @@ app.post('/loggingin', async (req, res) => {
     }
     else {
         console.log("Incorrect password!");
-        res.status(401).send(errorMessage('Error: Incorrect password!'), 'login');
+        res.status(401).send(errorMessage('Error: Incorrect password!', 'login'));
         return;
     }
 
