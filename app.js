@@ -11,14 +11,6 @@ const port = process.env.PORT || 3000;
 
 const app = express();
 
-<<<<<<< HEAD
-const expireTime = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
-
-
-const mongodb_user = process.env.MONGODB_USER;
-const mongodb_password = process.env.MONGODB_PASSWORD;
-const session_secret = process.env.SESSION_SECRET;
-=======
 const expireTime = 1 * 60 * 60 * 1000; //expires after 1 hour (hours * minutes * seconds * millis)
 
 const mongodb_host = process.env.MONGODB_HOST;
@@ -32,21 +24,15 @@ const session_secret = process.env.NODE_SESSION_SECRET;
 let { database } = require('./databaseConnection');
 
 const userCollection = database.db(mongodb_database).collection('users');
->>>>>>> good
 
 // Middleware to parse URL-encoded form data
 app.use(express.urlencoded({ extended: false }));
 
-<<<<<<< HEAD
-var mongoStore = MongoStore.create({
-    mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@assignment-1.vyb56ul.mongodb.net/`,
-=======
 var mongoStore = mongoSession.create({
     mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@assignment-1.vyb56ul.mongodb.net/`,
     crypto: {
         secret: mongodb_session_secret
     },
->>>>>>> good
 })
 
 app.use(session({
@@ -56,12 +42,6 @@ app.use(session({
     resave: true
 }));
 
-<<<<<<< HEAD
-app.get('/', (req, res) => {
-    res.send(
-        `<form method="GET" action="/signup">
-            <button>Signup</button>
-=======
 app.use(express.static(__dirname + "/public"));
 
 app.get('/', (req, res) => {
@@ -76,7 +56,6 @@ app.get('/', (req, res) => {
     res.send(
         `<form method="GET" action="/signup">
             <button>Sign up</button>
->>>>>>> good
         </form>
         <form method="GET" action="/login">
             <button>Login</button>
@@ -84,27 +63,15 @@ app.get('/', (req, res) => {
     );
 });
 
-<<<<<<< HEAD
-=======
 function errorMessage(message, type) {
     return `${message}<br><a href="/${type}">Try again</a>`
 }
 
->>>>>>> good
 app.get('/signup', (req, res) => {
     res.send(
         `<div>
             <form method="POST" action="/signupSubmit">
                 <label for="Signup">Create User</label><br>
-<<<<<<< HEAD
-                <input type="text" id="name" name="name" placeholder="name" required><br>
-                <input type="email" id="email" name="email" placeholder="example@email.com" required><br>
-                <input type="password" id="password" name="password" placeholder="password" required><br>
-                <button type="submit">Submit</button>
-            </form>
-        </div>`
-    ); 
-=======
                 <input type="text" id="name" name="name" placeholder="first name" maxlength="20" required><br>
                 <input type="email" id="email" name="email" placeholder="example@email.com" required><br>
                 <input type="password" id="password" name="password" placeholder="password" maxlength="20" required><br>
@@ -112,35 +79,21 @@ app.get('/signup', (req, res) => {
             </form>
         </div>`
     );
->>>>>>> good
 });
 
 app.get('/login', (req, res) => {
     res.send(
         `<div>
-<<<<<<< HEAD
-            <form method="POST" action="/updateCount">
-                <label for="Login">Log in</label>
-                <input type="email" id="email" name="email" placeholder="example@email.com" required>
-                <input type="password" id="password" name="password" placeholder="password" required>
-=======
             <form method="POST" action="/loggingin">
                 <label for="Login">Log in</label>
                 <input type="email" id="email" name="email" placeholder="example@email.com" required>
                 <input type="password" id="password" name="password" placeholder="password" maxlength="20" required>
->>>>>>> good
                 <button type="submit">Submit</button>
             </form> 
         </div>`
     );
 });
 
-<<<<<<< HEAD
-app.get('/members', (req, res) => {
-    res.send(
-        `<div>
-            <h1>Welcome to the members page!</h1>
-=======
 app.post('/signupSubmit', async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -240,7 +193,6 @@ app.get('/members', (req, res) => {
         `<div>
             <h1>Welcome to the members page ${req.session.name}!</h1>
             <img src="${imagePath}" alt="Dog" style="width:250px;"><br><br>
->>>>>>> good
             <form method="POST" action="/logout">
                 <button type="submit">Logout</button>
             </form>
@@ -248,49 +200,12 @@ app.get('/members', (req, res) => {
     );
 });
 
-<<<<<<< HEAD
-const schema = Joi.object({
-    name: Joi.string().alphanum().max(20).required(),
-    email: Joi.string().email().required(),
-    password: Joi.string().max(20).required(),
-  });
-
-app.post('/signupSubmit', (req, res) => {
-    const { name, email, password } = req.body;
-    console.log(`Name: ${name}, Email: ${email}, Password: ${password}`);
-    
-    // Validate the input data using Joi
-    const valid = schema.validate({ name, password, email });
-    if (valid.error != null) { // If there is an error in validation
-        console.log(valid.error);
-        const errorDetails = valid.error.details[0].message;
-        console.log(errorDetails);
-        res.status(400).send(
-            `Error: All fields are required!
-            <a href="/signup">Try again</a>`
-        );
-    } else { // All inputs are valid
-        let hashedPassword = bcrypt.hashSync(password, saltRounds);
-        res.redirect('/login');
-    }
-});
-
-app.post('/loggingin', (req, res) => {
-    
-});
-
-=======
->>>>>>> good
 app.post('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             console.error('Error destroying session:', err);
             return res.status(500).send('Error logging out');
         }
-<<<<<<< HEAD
-        res.redirect('/');
-    });
-=======
     });
     res.redirect('/');
 });
@@ -298,43 +213,8 @@ app.post('/logout', (req, res) => {
 app.get("*dummy", (req,res) => {
     res.status(404);
     res.send("Page not found - 404");
->>>>>>> good
 });
 
 app.listen(port, () => {
     console.log(`Example app listening on port ${port}`)
-<<<<<<< HEAD
-  })
-
-// async function main() {
-//     const uri = "mongodb+srv://130ddo:arrow425@assignment-1.vyb56ul.mongodb.net/";
-
-//     const client = new MongoClient(uri);
-
-//     console.log("Connecting to MongoDB Atlas...");
-//     try {
-//         await client.connect();
-
-//         await listDatabases(client);
-//     } catch (e) {
-//         console.error(e);
-//     } finally {
-//         await client.close();
-//     }
-    
-// }
-
-// main().catch(console.error);
-
-// async function listDatabases(client) {
-//     const databasesList = await client.db().admin().listDatabases();
-
-//     console.log("Databases:");
-//     databasesList.databases.forEach(db => {
-//         console.log(` - ${db.name}`);
-//     });
-
-// }
-=======
 });
->>>>>>> good
