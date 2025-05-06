@@ -178,19 +178,14 @@ app.get('/members', (req, res) => {
     console.log("Image number:", imageNumber);
     let imagePath;
 
-    switch (imageNumber) {
-        case 0:
-            imagePath = '/dog1.jpg';
-            break;
-        case 1:
-            imagePath = '/dog2.png';
-            break;
-        case 2:
-            imagePath = '/pom.png';
-            break;
-        default:
-            imagePath = '/dog1.png'; // Fallback to a default image
+    if (imageNumber == 0) {
+        imagePath = '/dog1.jpg';
+    } else if (imageNumber == 1) {
+        imagePath = '/dog2.png';
+    } else if (imageNumber == 2) {
+        imagePath = '/pom.png';
     }
+    console.log ("Image path:", imagePath);
 
     res.send(
         `<div>
