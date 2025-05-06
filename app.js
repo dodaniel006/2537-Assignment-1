@@ -170,7 +170,7 @@ app.get('/members', (req, res) => {
         return;
     }
 
-    let imageNumber = req.session.randNum;
+    let imageNumber = Math.floor(Math.random() * 3); // Random number between 0 and 2
     let imagePath;
 
     if (imageNumber == 0) {
