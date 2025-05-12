@@ -1,0 +1,15 @@
+<div>
+    <h2>Users</h2>
+    <% for (let user of users)  %>
+        <div>
+            <p>
+                <%= user.name %>
+            </p>
+            <p>
+                <%= user.email %>
+            </p>
+            <form action="/admin/delete/<%= user._id %>" method="POST">
+                <button type="submit">Delete</button>
+            </form>
+        </div>
+</div>

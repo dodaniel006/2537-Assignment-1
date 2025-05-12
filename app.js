@@ -1,3 +1,6 @@
+// =========================
+// 1. Imports and Configuration
+// =========================
 const express = require('express');
 const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
@@ -7,29 +10,30 @@ const bcrypt = require('bcrypt');
 require('dotenv').config();
 
 const saltRounds = 12;
-
 const port = process.env.PORT || 3000;
 
 const app = express();
 
-const expireTime = 1 * 60 * 60 * 1000; //expires after 1 hour (hours * minutes * seconds * millis)
-
+const expireTime = 1 * 60 * 60 * 1000; // 1 hour expiration
 const mongodb_user = process.env.MONGODB_USER;
 const mongodb_password = process.env.MONGODB_PASSWORD;
 const mongodb_database = process.env.MONGODB_DATABASE;
-
 const mongodb_session_secret = process.env.MONGODB_SESSION_SECRET;
 const session_secret = process.env.NODE_SESSION_SECRET;
 
 let { database } = require('./databaseConnection');
-
 const userCollection = database.db(mongodb_database).collection('users');
 
 const center = true;
+const defaultSettings = {
+    center: true,
+    auth: false,
+}
 
-// Middleware to parse URL-encoded form data
-app.use(express.urlencoded({ extended: false }));
-
+// =========================
+// 2. Middleware
+// =========================
+app.use(express.urlencoded({ extended: false })); // Parse URL-encoded form data
 app.use("/css", express.static("./css"));
 app.use("/public", express.static("./public"));
 
@@ -38,7 +42,7 @@ var mongoStore = mongoSession.create({
     crypto: {
         secret: mongodb_session_secret
     },
-})
+});
 
 app.use(session({
     secret: session_secret,
@@ -48,37 +52,52 @@ app.use(session({
 }));
 
 app.set("view engine", "ejs");
-
 app.use(expressLayouts);
-
-app.set('layout', 'templates/layout')
-
+app.set('layout', 'templates/layout');
 app.use(express.static(__dirname + "/public"));
 
-app.get('/', (req, res) => {
-    authenticatedCheck(req, res, 'index', center);
-});
-
-function errorMessage(message, type) {
-    return `${message}<br><a href="/${type}">Try again</a>`
-}
-
-function authenticatedCheck(req, res, path, center) {
+// =========================
+// 3. Helper Functions
+// =========================
+function checkAuthenticated(req, res, next) {
     if (req.session.authenticated) {
-        res.render('authenticated', { name: req.session.name, authenticated: req.session.authenticated, center: center});
-        return;
+        return res.redirect('/authenticated');
     }
-    res.render(path, { center: center } );
+    next();
 }
 
-app.get('/signup', (req, res) => {
-    authenticatedCheck(req, res, 'signup', center);
+function validateSession(req, res, next) {
+    if (!req.session.authenticated) {
+        return res.render('error', { message: `You are not logged in!`, type: 'session'});
+    }
+    next();
+}
+
+function createSettings(userSettings) {
+    let settings = Object.assign({}, defaultSettings, userSettings);
+    return settings;
+}
+
+// =========================
+// 4. Routes
+// =========================
+
+// Home Page
+app.get('/', checkAuthenticated, (req, res) => {
+    res.render('index', defaultSettings);
 });
 
-app.get('/login', (req, res) => {
-    authenticatedCheck(req, res, 'login', center);
+// Signup Page
+app.get('/signup', checkAuthenticated, (req, res) => {
+    res.render('signup', defaultSettings);
 });
 
+// Login Page
+app.get('/login', checkAuthenticated, (req, res) => {
+    res.render('login', defaultSettings);
+});
+
+// Signup Submission
 app.post('/signupSubmit', async (req, res) => {
     const { name, email, password } = req.body;
 
@@ -88,15 +107,15 @@ app.post('/signupSubmit', async (req, res) => {
         password: Joi.string().max(20).required(),
     });
 
-    // Validate the input data using Joi
     const valid = schema.validate({ name, password, email });
-    if (valid.error != null) { // If there is an error in validation
+    if (valid.error != null) {
         console.log(valid.error);
-        res.status(400).send(errorMessage(valid.error, 'signup'));
+        settings = createSettings({ message: valid.error, type: 'signup'});
+        res.status(400).render('error', settings);
         return;
-    } // All inputs are valid
+    }
 
-    let hashedPassword = await bcrypt.hashSync(password, saltRounds);
+    let hashedPassword = bcrypt.hashSync(password, saltRounds);
 
     await userCollection.insertOne({
         name: name,
@@ -105,16 +124,15 @@ app.post('/signupSubmit', async (req, res) => {
     });
     console.log("Inserted user");
 
-    // Log the user in by setting session variables
     req.session.authenticated = true;
     req.session.email = email;
     req.session.name = name;
     req.session.cookie.maxAge = expireTime;
 
-    // Redirect to the members area
     res.redirect('/members');
 });
 
+// Login Submission
 app.post('/loggingin', async (req, res) => {
     let { email, password } = req.body;
 
@@ -131,9 +149,10 @@ app.post('/loggingin', async (req, res) => {
     }
 
     const result = await userCollection.find({ email: email }).project({ email: 1, password: 1, name: 1, _id: 1 }).toArray();
-
-    if (result.length != 1) {
-        res.status(401).send(errorMessage('Error: User not found!', 'login'));
+    console.log(result);
+    if (result.length < 1) {
+        settings = createSettings({message: 'Error: User not found!', type: 'login'});
+        res.status(401).render('error', settings);
         return;
     }
 
@@ -146,23 +165,18 @@ app.post('/loggingin', async (req, res) => {
 
         res.redirect('/members');
         return;
-    }
-    else {
+    } else {
         console.log("Incorrect password!");
-        res.status(401).send(errorMessage('Error: Incorrect password!', 'login'));
+        settings = createSettings({ message: 'Error: Incorrect password!', type: 'login'});
+        res.status(401).render('error', settings);
         return;
     }
-
 });
 
-app.get('/members', (req, res) => {
+// Members Page
+app.get('/members', validateSession, (req, res) => {
 
-    if (!req.session.authenticated) {
-        res.redirect('/');
-        return;
-    }
-
-    let imageNumber = Math.floor(Math.random() * 3); // Random number between 0 and 2
+    let imageNumber = Math.floor(Math.random() * 3);
     let imagePath;
 
     if (imageNumber == 0) {
@@ -173,24 +187,45 @@ app.get('/members', (req, res) => {
         imagePath = '/pom.png';
     }
 
-    res.render('members', { name: req.session.name, imagePath: imagePath, authenticated: req.session.authenticated, param: center });
+    settings = createSettings({ name: req.session.name, imagePath: imagePath, auth: req.session.authenticated });
+    res.render('members', settings);
+})
+
+app.get('/authenticated', validateSession, (req, res) => {
+    settings = createSettings({ name: req.session.name, auth: req.session.authenticated });
+    res.render('authenticated', settings);
 });
 
+// Admin Page
+app.get('/admin', (req, res) => {
+    settings = createSettings({ name: req.session.name, auth: req.session.authenticated });
+    res.render('admin', settings);
+});
+
+// Logout
 app.post('/logout', (req, res) => {
     req.session.destroy((err) => {
         if (err) {
             console.error('Error destroying session:', err);
-            return res.status(500).send('Error logging out');
+            settings = createSettings({ message: 'Error logging out', type: 'logout' });
+            return res.status(500).render('error', settings);
         }
     });
     res.redirect('/');
 });
 
-app.get("*dummy", (req, res) => {
-    res.status(404);
-    res.render("404");
+// =========================
+// 5. Error Handling
+// =========================
+
+// 404 Page
+app.get("*error", (req, res) => {
+    res.status(404).render("404", defaultSettings);
 });
 
+// =========================
+// 6. Start Server
+// =========================
 app.listen(port, () => {
-    console.log(`Example app listening on port ${port}`)
+    console.log(`Example app listening on port ${port}`);
 });
