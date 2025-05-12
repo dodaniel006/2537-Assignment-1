@@ -120,13 +120,15 @@ app.post('/signupSubmit', async (req, res) => {
     await userCollection.insertOne({
         name: name,
         email: email,
-        password: hashedPassword
+        password: hashedPassword,
+        type: 'user'
     });
     console.log("Inserted user");
 
     req.session.authenticated = true;
     req.session.email = email;
     req.session.name = name;
+    req.session.type = 'user';
     req.session.cookie.maxAge = expireTime;
 
     res.redirect('/members');
@@ -148,7 +150,7 @@ app.post('/loggingin', async (req, res) => {
         return;
     }
 
-    const result = await userCollection.find({ email: email }).project({ email: 1, password: 1, name: 1, _id: 1 }).toArray();
+    const result = await userCollection.find({ email: email }).project({ email: 1, password: 1, name: 1, _id: 1, type: 1 }).toArray();
     console.log(result);
     if (result.length < 1) {
         settings = createSettings({message: 'Error: User not found!', type: 'login'});
@@ -157,10 +159,17 @@ app.post('/loggingin', async (req, res) => {
     }
 
     if (await bcrypt.compare(password, result[0].password)) {
+
+        if (typeof result[0].type == 'undefined') {
+            await userCollection.updateOne({email: email}, {$set: {user_type: 'user'}});
+            console.log("User type set to user");
+        }
+
         console.log("Password matches!");
         req.session.authenticated = true;
         req.session.email = email;
         req.session.name = result[0].name;
+        req.session.type = result[0].type;
         req.session.cookie.maxAge = expireTime;
 
         res.redirect('/members');
@@ -197,8 +206,11 @@ app.get('/authenticated', validateSession, (req, res) => {
 });
 
 // Admin Page
-app.get('/admin', (req, res) => {
-    settings = createSettings({ name: req.session.name, auth: req.session.authenticated });
+app.get('/admin', async (req, res) => {
+
+    const result = await userCollection.find({}).project({ email: 1, name: 1, type: 1 }).toArray();
+    console.log(JSON.stringify(result));
+    settings = createSettings({ name: req.session.name, auth: req.session.authenticated, users: result });
     res.render('admin', settings);
 });
 

@@ -1,9 +1,9 @@
 <div>
     <h2>Users</h2>
-    <% for (let user of users)  %>
+    <% for (let user of users) { %>
         <div>
             <p>
-                <%= user.name %>
+                <%= user.name %> (<%= user.type %>)
             </p>
             <p>
                 <%= user.email %>
@@ -12,4 +12,5 @@
                 <button type="submit">Delete</button>
             </form>
         </div>
+        <% } %>
 </div>
