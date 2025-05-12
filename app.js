@@ -1,4 +1,5 @@
 const express = require('express');
+const expressLayouts = require('express-ejs-layouts');
 const session = require('express-session');
 const mongoSession = require('connect-mongo');
 const Joi = require('joi');
@@ -24,8 +25,13 @@ let { database } = require('./databaseConnection');
 
 const userCollection = database.db(mongodb_database).collection('users');
 
+const center = true;
+
 // Middleware to parse URL-encoded form data
 app.use(express.urlencoded({ extended: false }));
+
+app.use("/css", express.static("./css"));
+app.use("/public", express.static("./public"));
 
 var mongoStore = mongoSession.create({
     mongoUrl: `mongodb+srv://${mongodb_user}:${mongodb_password}@assignment-1.vyb56ul.mongodb.net/`,
@@ -41,56 +47,36 @@ app.use(session({
     resave: true
 }));
 
+app.set("view engine", "ejs");
+
+app.use(expressLayouts);
+
+app.set('layout', 'templates/layout')
+
 app.use(express.static(__dirname + "/public"));
 
 app.get('/', (req, res) => {
-
-    if (req.session.authenticated) {
-        res.send(
-            `<form method="GET" action="/members"><label>Hello ${req.session.name}, you are Already Logged In!</label><br><button>Members Area</button></form>
-            <form method="POST" action="/logout"><button type="submit">Logout</button></form>`
-        );
-        return;
-    }
-    res.send(
-        `<form method="GET" action="/signup">
-            <button>Sign up</button>
-        </form>
-        <form method="GET" action="/login">
-            <button>Login</button>
-        </form>`
-    );
+    authenticatedCheck(req, res, 'index', center);
 });
 
 function errorMessage(message, type) {
     return `${message}<br><a href="/${type}">Try again</a>`
 }
 
+function authenticatedCheck(req, res, path, center) {
+    if (req.session.authenticated) {
+        res.render('authenticated', { name: req.session.name, authenticated: req.session.authenticated, center: center});
+        return;
+    }
+    res.render(path, { center: center } );
+}
+
 app.get('/signup', (req, res) => {
-    res.send(
-        `<div>
-            <form method="POST" action="/signupSubmit">
-                <label for="Signup">Create User</label><br>
-                <input type="text" id="name" name="name" placeholder="first name" maxlength="20" required><br>
-                <input type="email" id="email" name="email" placeholder="example@email.com" required><br>
-                <input type="password" id="password" name="password" placeholder="password" maxlength="20" required><br>
-                <button type="submit">Submit</button>
-            </form>
-        </div>`
-    );
+    authenticatedCheck(req, res, 'signup', center);
 });
 
 app.get('/login', (req, res) => {
-    res.send(
-        `<div>
-            <form method="POST" action="/loggingin">
-                <label for="Login">Log in</label>
-                <input type="email" id="email" name="email" placeholder="example@email.com" required>
-                <input type="password" id="password" name="password" placeholder="password" maxlength="20" required>
-                <button type="submit">Submit</button>
-            </form> 
-        </div>`
-    );
+    authenticatedCheck(req, res, 'login', center);
 });
 
 app.post('/signupSubmit', async (req, res) => {
@@ -187,15 +173,7 @@ app.get('/members', (req, res) => {
         imagePath = '/pom.png';
     }
 
-    res.send(
-        `<div>
-            <h1>Welcome to the members page ${req.session.name}!</h1>
-            <img src="${imagePath}" alt="Dog" style="width:250px;"><br><br>
-            <form method="POST" action="/logout">
-                <button type="submit">Logout</button>
-            </form>
-        </div>`
-    );
+    res.render('members', { name: req.session.name, imagePath: imagePath, authenticated: req.session.authenticated, param: center });
 });
 
 app.post('/logout', (req, res) => {
@@ -208,9 +186,9 @@ app.post('/logout', (req, res) => {
     res.redirect('/');
 });
 
-app.get("*dummy", (req,res) => {
+app.get("*dummy", (req, res) => {
     res.status(404);
-    res.send("Page not found - 404");
+    res.render("404");
 });
 
 app.listen(port, () => {
