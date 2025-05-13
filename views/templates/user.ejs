@@ -1,0 +1,19 @@
+<div class="text-center mb-3">
+    <div class="card">
+        <div class="card-body">
+            <h5 class="card-title">
+                <%= user.name %> (<%= user.user_type %>)
+            </h5>
+            <p class="card-text">
+                <%= user.email %>
+            </p>
+            <form action="/admin/action" method="POST" class="d-inline">
+                <input type="hidden" name="email" value="<%= user.email %>">
+                <button type="submit" name="action" value="promote" class="btn btn-success btn-sm">Promote to
+                    Admin</button>
+                <button type="submit" name="action" value="demote" class="btn btn-danger btn-sm">Demote to
+                    User</button>
+            </form>
+        </div>
+    </div>
+</div>

@@ -24,7 +24,6 @@ const session_secret = process.env.NODE_SESSION_SECRET;
 let { database } = require('./databaseConnection');
 const userCollection = database.db(mongodb_database).collection('users');
 
-const center = true;
 const defaultSettings = {
     center: true,
     auth: false,
@@ -68,7 +67,7 @@ function checkAuthenticated(req, res, next) {
 
 function validateSession(req, res, next) {
     if (!req.session.authenticated) {
-        return res.render('error', { message: `You are not logged in!`, type: 'session'});
+        return res.redirect('/login');
     }
     next();
 }
@@ -110,7 +109,7 @@ app.post('/signupSubmit', async (req, res) => {
     const valid = schema.validate({ name, password, email });
     if (valid.error != null) {
         console.log(valid.error);
-        settings = createSettings({ message: valid.error, type: 'signup'});
+        settings = createSettings({ message: valid.error, type: 'signup' });
         res.status(400).render('error', settings);
         return;
     }
@@ -121,14 +120,14 @@ app.post('/signupSubmit', async (req, res) => {
         name: name,
         email: email,
         password: hashedPassword,
-        type: 'user'
+        user_type: 'user'
     });
     console.log("Inserted user");
 
     req.session.authenticated = true;
     req.session.email = email;
     req.session.name = name;
-    req.session.type = 'user';
+    req.session.user_type = 'user';
     req.session.cookie.maxAge = expireTime;
 
     res.redirect('/members');
@@ -150,18 +149,18 @@ app.post('/loggingin', async (req, res) => {
         return;
     }
 
-    const result = await userCollection.find({ email: email }).project({ email: 1, password: 1, name: 1, _id: 1, type: 1 }).toArray();
+    const result = await userCollection.find({ email: email }).project({ email: 1, password: 1, name: 1, _id: 1, user_type: 1 }).toArray();
     console.log(result);
     if (result.length < 1) {
-        settings = createSettings({message: 'Error: User not found!', type: 'login'});
+        settings = createSettings({ message: 'Error: User not found!', type: 'login' });
         res.status(401).render('error', settings);
         return;
     }
 
     if (await bcrypt.compare(password, result[0].password)) {
 
-        if (typeof result[0].type == 'undefined') {
-            await userCollection.updateOne({email: email}, {$set: {user_type: 'user'}});
+        if (typeof result[0].user_type == 'undefined') {
+            await userCollection.updateOne({ email: email }, { $set: { user_type: 'user' } });
             console.log("User type set to user");
         }
 
@@ -169,34 +168,23 @@ app.post('/loggingin', async (req, res) => {
         req.session.authenticated = true;
         req.session.email = email;
         req.session.name = result[0].name;
-        req.session.type = result[0].type;
+        req.session.user_type = result[0].user_type;
         req.session.cookie.maxAge = expireTime;
 
-        res.redirect('/members');
-        return;
+        return res.redirect('/members');
     } else {
         console.log("Incorrect password!");
-        settings = createSettings({ message: 'Error: Incorrect password!', type: 'login'});
-        res.status(401).render('error', settings);
-        return;
+        settings = createSettings({ message: 'Error: Incorrect password!', type: 'login' });
+        return res.status(401).render('error', settings);
     }
 });
 
 // Members Page
 app.get('/members', validateSession, (req, res) => {
 
-    let imageNumber = Math.floor(Math.random() * 3);
-    let imagePath;
-
-    if (imageNumber == 0) {
-        imagePath = '/dog1.png';
-    } else if (imageNumber == 1) {
-        imagePath = '/dog2.png';
-    } else if (imageNumber == 2) {
-        imagePath = '/pom.png';
-    }
-
-    settings = createSettings({ name: req.session.name, imagePath: imagePath, auth: req.session.authenticated });
+    let imagePaths = ['dog1', 'dog2', 'pom'];
+    let authorized = req.session.user_type == 'admin' ? true : false;
+    settings = createSettings({ name: req.session.name, imagePaths: imagePaths, auth: req.session.authenticated, authorized: authorized });
     res.render('members', settings);
 })
 
@@ -206,12 +194,33 @@ app.get('/authenticated', validateSession, (req, res) => {
 });
 
 // Admin Page
-app.get('/admin', async (req, res) => {
+app.get('/admin', validateSession, async (req, res) => {
+    let user = await userCollection.findOne({ email: req.session.email }, { projection: { user_type: 1 } });
+    req.session.user_type = user ? user.user_type : undefined;
 
-    const result = await userCollection.find({}).project({ email: 1, name: 1, type: 1 }).toArray();
-    console.log(JSON.stringify(result));
-    settings = createSettings({ name: req.session.name, auth: req.session.authenticated, users: result });
-    res.render('admin', settings);
+    if (req.session.user_type == 'admin') {
+        const result = await userCollection.find({}).project({ email: 1, name: 1, user_type: 1, _id: 1 }).toArray();
+        settings = createSettings({ name: req.session.name, auth: req.session.authenticated, users: result });
+        res.render('admin', settings);
+    }
+    else {
+        settings = createSettings({ message: 'Error: You are not an admin!', type: 'members', auth: req.session.authenticated });
+        res.status(403).render('error', settings);
+    }
+});
+
+app.post('/admin/action', async (req, res) => {
+    const { email, action } = req.body;
+
+    if (action == 'promote') {
+        await userCollection.updateOne({ email: email}, {$set: {user_type: 'admin'}});
+        console.log(`User ${email} type set to admin`);
+    } else if (action == 'demote') {
+        await userCollection.updateOne({ email: email}, {$set: {user_type: 'user'}});
+        console.log(`User ${email} type set to user`);
+    }
+
+    res.redirect('/admin');
 });
 
 // Logout
@@ -232,7 +241,8 @@ app.post('/logout', (req, res) => {
 
 // 404 Page
 app.get("*error", (req, res) => {
-    res.status(404).render("404", defaultSettings);
+    settings = createSettings({ auth: req.session.authenticated });
+    res.status(404).render("404", settings);
 });
 
 // =========================
