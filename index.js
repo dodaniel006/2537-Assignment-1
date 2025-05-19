@@ -1,13 +1,19 @@
+// const { select } = require("async");
+
 let start = document.getElementById("start");
 let reset = document.getElementById("reset");
 let game = document.getElementById("game_grid");
 
-document.getElementById("start").addEventListener("click", async function () {
+let rendered = false;
+let pokemonCount = 0;
+
+async function renderGame(pokemon, row) {
+  rendered = true;
 
   cards = [];
 
-  let pokemonCount = 3;
-  let rowCount = 2;
+  pokemonCount = pokemon;
+  let rowCount = row;
 
   for (let i = 0; i < rowCount; i++) {
     let row = document.createElement("div");
@@ -17,22 +23,24 @@ document.getElementById("start").addEventListener("click", async function () {
     game.appendChild(row);
   }
 
+  let result = await fetch(`https://pokeapi.co/api/v2/pokemon/?limit=1302`);
+  let jsonObj = await result.json();
+
   for (let i = 0; i < pokemonCount; i++) {
     let card = document.createElement("div");
+    card.classList.add(`img_${i + 1}`);
     card.classList.add("card");
-    let randomId = Math.floor(Math.random() * 1301) + 1;
-    let result = await fetch(`https://pokeapi.co/api/v2/pokemon/?limit=1&offset=${randomId}`);
-    let jsonObj = await result.json();
 
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    let response2 = await fetch(`https://pokeapi.co/api/v2/pokemon/${jsonObj.results[0].name}`);
+    let index = Math.floor(Math.random() * jsonObj.results.length);
+    let response2 = await fetch(`https://pokeapi.co/api/v2/pokemon/${jsonObj.results[index].name}`);
     let jsonObj2 = await response2.json();
     console.log(jsonObj2);
 
     card.innerHTML = `<img src="${jsonObj2.sprites.other['official-artwork'].front_default}" alt="${jsonObj2.name}" class="front_face">
-    <img class="back_face" src="back.webp" alt="">`;
+      <img class="back_face" src="back.webp" alt="Pokeball">`;
+
     cards.push(card);
+
     await new Promise(resolve => setTimeout(resolve, 500));
   }
 
@@ -52,25 +60,72 @@ document.getElementById("start").addEventListener("click", async function () {
 
     for (let col = 0; col < pokemonCount; col++) {
       let card = cardPairs[cardIndex].cloneNode(true);
-      card.id = `img${cardIndex + 1}`;
-      card.style.width = "150px";
-      card.style.height = "150px";
+      card.id = `card_${cardIndex + 1}`;
+
+      // Pass the first class (e.g., "img_1", "img_2", etc.) to flip instead of the id
+      let className = card.classList[0];
 
       card.addEventListener("click", function () {
-        flip(card.id);
+        flip(card.id, className);
       });
 
       row.appendChild(card);
       cardIndex++;
     }
   }
-});
-
-function flip(id) {
-  let card = document.getElementById(id);
-  card.classList.toggle("flip");
-  console.log(id);
 }
+
+let flipCount = 0;
+let selectedCards = [];
+let finishedCards = [];
+
+function flip(id, className) {
+
+  if (!finishedCards.includes(id)) {
+    console.log(`flipping: `, id);
+    selectedCards.push({ id, className });
+    let card = document.getElementById(id);
+    card.classList.toggle("flip");
+    flipCount++;
+  } else {
+    console.log("That card is already finished.")
+  }
+
+  if (flipCount % 2 == 0) {
+    let flip1 = selectedCards.pop();
+    let flip2 = selectedCards.pop();
+    console.log(flip1, flip2);
+    if (flip1.className == flip2.className) {
+      finishedCards.push(flip1.id, flip2.id);
+      console.log("That's a match!");
+    } else {
+      setTimeout(() => {
+        let card1 = document.getElementById(flip1.id);
+        let card2 = document.getElementById(flip2.id);
+        if (card1) card1.classList.toggle("flip");
+        if (card2) card2.classList.toggle("flip");
+      }, 3000);
+    }
+
+    if (finishedCards.length >= pokemonCount * 2) {
+      setTimeout(() => {
+        alert("You've matched all of the cards! You win!");
+      }, 1000);
+
+    }
+  }
+
+
+}
+
+document.getElementById("start").addEventListener("click", async function () {
+  if (rendered) {
+    alert("Game already started");
+    return;
+  } else {
+    renderGame(3, 2)
+  }
+});
 
 // function setup () {
 //   let firstCard = undefined
