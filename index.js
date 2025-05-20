@@ -35,9 +35,9 @@ async function renderGame(pokemon, row, col, gameTime) {
   let cards = [];
   let loading = true;
   loadingScreen();
-  timer.innerHTML = `<h5 class="mb-0 text-info">Time: <span class="fw-bold">${time}</span></h5>`;
-  total.innerHTML = `<h6 class="mb-0 text-secondary">Total Number of Pairs: <span class="fw-bold">${pokemonCount}</span></h6>`;
-  remaining.innerHTML = `<h6 class="mb-0 text-warning">Number of Pairs Remaining: <span class="fw-bold">${pokemonCount}</span></h6>`;
+  timer.innerHTML = `<h5 class="mb-0 text-primary">Time: <span class="fw-bold">${time}</span></h5>`;
+  total.innerHTML = `<h6 class="mb-0 text-primary">Total Number of Pairs: <span class="fw-bold">${pokemonCount}</span></h6>`;
+  remaining.innerHTML = `<h6 class="mb-0 text-primary">Number of Pairs Remaining: <span class="fw-bold">${pokemonCount}</span></h6>`;
 
   let result = await fetch(`https://pokeapi.co/api/v2/pokemon/?limit=1302`);
   let jsonObj = await result.json();
@@ -172,8 +172,8 @@ async function flip(id, className) {
           if (flip1.className == flip2.className) {
             finishedCards.push(flip1.id, flip2.id);
             cardsMatched++;
-            remaining.innerHTML = `<h6 class="mb-0 text-warning">Number of Pairs Remaining: <span class="fw-bold">${pokemonCount - cardsMatched}</span></h6>`;
-            matched.innerHTML = `<h6 class="mb-0 text-success">Number of Pairs Matched: <span class="fw-bold">${cardsMatched}</span></h6>`;
+            remaining.innerHTML = `<h6 class="mb-0 text-primary">Number of Pairs Remaining: <span class="fw-bold">${pokemonCount - cardsMatched}</span></h6>`;
+            matched.innerHTML = `<h6 class="mb-0 text-primary">Number of Pairs Matched: <span class="fw-bold">${cardsMatched}</span></h6>`;
             console.log("That's a match!");
             if (card1) card1.classList.add("matched");
             if (card2) card2.classList.add("matched");
@@ -214,7 +214,7 @@ async function startTimer() {
     } else if (gameRunning) {
       console.log("subtracting");
       countdown--;
-      timer.innerHTML = `<h5 class="mb-0 text-info">Time: <span class="fw-bold">${countdown}</span></h5>`;
+      timer.innerHTML = `<h5 class="mb-0 text-primary">Time: <span class="fw-bold">${countdown}</span></h5>`;
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
@@ -223,8 +223,8 @@ async function startTimer() {
 async function resetGame() {
   gameRunning = false;
   game.innerHTML = "<h3>Loading...</h3>";
-  timer.innerHTML = `<h5 class="mb-0 text-info">Time: <span class="fw-bold">${time}</span></h5>`;
-  matched.innerHTML = `<h6 class="mb-0 text-success">Number of Pairs Matched: <span class="fw-bold">0</span></h6>`;
+  timer.innerHTML = `<h5 class="mb-0 text-primary">Time: <span class="fw-bold">${time}</span></h5>`;
+  matched.innerHTML = `<h6 class="mb-0 text-primary">Number of Pairs Matched: <span class="fw-bold">0</span></h6>`;
   clicks.innerHTML = `<h6 class="mb-0 text-primary">Number of Clicks: <span class="fw-bold">0</span></h6>`;
   rendered = false;
   flipping = false;
