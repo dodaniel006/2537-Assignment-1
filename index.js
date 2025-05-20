@@ -10,6 +10,7 @@ let start = document.getElementById("start");
 let reset = document.getElementById("reset");
 let timer = document.getElementById("timer");
 let game = document.getElementById("game_grid");
+document.getElementById("powerupContainer").style.visibility = "hidden";
 
 let rendered = false;
 let pokemonCount = 0;
@@ -34,9 +35,9 @@ async function renderGame(pokemon, row, col, gameTime) {
   let cards = [];
   let loading = true;
   loadingScreen();
-  timer.innerHTML = `<h3>Time: ${time}</h3>`;
-  total.innerHTML = `<h5>Total Number of Pairs: ${pokemonCount}</h5>`;
-  remaining.innerHTML = `<h5>Number of Pairs Remaining: ${pokemonCount}</h5>`;
+  timer.innerHTML = `<h5 class="mb-0 text-info">Time: <span class="fw-bold">${time}</span></h5>`;
+  total.innerHTML = `<h6 class="mb-0 text-secondary">Total Number of Pairs: <span class="fw-bold">${pokemonCount}</span></h6>`;
+  remaining.innerHTML = `<h6 class="mb-0 text-warning">Number of Pairs Remaining: <span class="fw-bold">${pokemonCount}</span></h6>`;
 
   let result = await fetch(`https://pokeapi.co/api/v2/pokemon/?limit=1302`);
   let jsonObj = await result.json();
@@ -44,7 +45,7 @@ async function renderGame(pokemon, row, col, gameTime) {
   for (let i = 0; i < pokemonCount; i++) {
     let card = document.createElement("div");
     card.classList.add(`img_${i + 1}`);
-    card.classList.add("card");
+    card.classList.add("pokeCard");
     card.classList.add("mx-2");
 
     let index = Math.floor(Math.random() * jsonObj.results.length);
@@ -52,17 +53,17 @@ async function renderGame(pokemon, row, col, gameTime) {
     let jsonObj2;
     while (true) {
       try {
-      let response2 = await fetch(`https://pokeapi.co/api/v2/pokemon/${jsonObj.results[index].name}`);
-      if (response2.status === 429) {
-        // Too Many Requests, wait and try again
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        continue;
-      }
-      jsonObj2 = await response2.json();
-      break;
+        let response2 = await fetch(`https://pokeapi.co/api/v2/pokemon/${jsonObj.results[index].name}`);
+        if (response2.status === 429) {
+          // Too Many Requests, wait and try again
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          continue;
+        }
+        jsonObj2 = await response2.json();
+        break;
       } catch (err) {
-      // Network or other error, wait and try again
-      await new Promise(resolve => setTimeout(resolve, 1000));
+        // Network or other error, wait and try again
+        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
     console.log(jsonObj2);
@@ -116,7 +117,7 @@ async function renderGame(pokemon, row, col, gameTime) {
     }
   }
 
-  document.getElementById("powerupContainer").classList.toggle("invisible");
+  document.getElementById("powerupContainer").style.visibility = "visible";
   gameRunning = true;
   startTimer();
 
@@ -149,7 +150,7 @@ async function flip(id, className) {
       } else {
 
         cardsClicked++;
-        clicks.innerHTML = `<h5>Number of Clicks: ${cardsClicked}</h5>`;
+        clicks.innerHTML = `<h6 class="mb-0 text-primary">Number of Clicks: <span class="fw-bold">${cardsClicked}</span></h6>`;
 
         flipping = true;
 
@@ -171,8 +172,8 @@ async function flip(id, className) {
           if (flip1.className == flip2.className) {
             finishedCards.push(flip1.id, flip2.id);
             cardsMatched++;
-            remaining.innerHTML = `<h5>Number of Pairs Remaining: ${pokemonCount - cardsMatched}</h5>`;
-            matched.innerHTML = `<h5>Number of Pairs Matched: ${cardsMatched}</h5>`;
+            remaining.innerHTML = `<h6 class="mb-0 text-warning">Number of Pairs Remaining: <span class="fw-bold">${pokemonCount - cardsMatched}</span></h6>`;
+            matched.innerHTML = `<h6 class="mb-0 text-success">Number of Pairs Matched: <span class="fw-bold">${cardsMatched}</span></h6>`;
             console.log("That's a match!");
             if (card1) card1.classList.add("matched");
             if (card2) card2.classList.add("matched");
@@ -213,7 +214,7 @@ async function startTimer() {
     } else if (gameRunning) {
       console.log("subtracting");
       countdown--;
-      timer.innerHTML = `<h3>Time: ${countdown}</h3>`;
+      timer.innerHTML = `<h5 class="mb-0 text-info">Time: <span class="fw-bold">${countdown}</span></h5>`;
     }
     await new Promise(resolve => setTimeout(resolve, 1000));
   }
@@ -222,15 +223,16 @@ async function startTimer() {
 async function resetGame() {
   gameRunning = false;
   game.innerHTML = "<h3>Loading...</h3>";
-  timer.innerHTML = `<h3>Time: ${time}</h3>`;
-  matched.innerHTML = `<h5>Number of Pairs Matched: 0</h5>`;
-  clicks.innerHTML = `<h5>Number of Clicks: 0</h5>`;
+  timer.innerHTML = `<h5 class="mb-0 text-info">Time: <span class="fw-bold">${time}</span></h5>`;
+  matched.innerHTML = `<h6 class="mb-0 text-success">Number of Pairs Matched: <span class="fw-bold">0</span></h6>`;
+  clicks.innerHTML = `<h6 class="mb-0 text-primary">Number of Clicks: <span class="fw-bold">0</span></h6>`;
   rendered = false;
   flipping = false;
   flipCount = 0;
   cardsClicked = 0;
   cardsMatched = 0;
   powerupCount = 1;
+  document.getElementById("powerupContainer").style.visibility = "hidden";
   selectedCards = [];
   finishedCards = [];
   gameStats = getDifficultyStats();
@@ -239,7 +241,7 @@ async function resetGame() {
 
 async function flipPowerup() {
   powerupCount--;
-  let cardsToFlip = document.querySelectorAll(".card:not(.matched)");
+  let cardsToFlip = document.querySelectorAll(".pokeCard:not(.matched)");
   for (card of cardsToFlip) {
     flipCard(card);
   }
@@ -305,5 +307,8 @@ document.getElementById("powerup").addEventListener("click", function () {
     flipPowerup();
     document.getElementById("powerupCount").innerText = `${powerupCount} use(s) remaining`;
   }
+});
 
+document.getElementById("darkModeToggle").addEventListener("click", function () {
+  document.body.classList.toggle("dark-mode");
 });

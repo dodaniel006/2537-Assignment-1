@@ -2,9 +2,18 @@ body {
   margin: 0px;
 }
 
+body,
+.pokeCard,
+.btn,
+h2,
+h5,
+h6 {
+  font-family: 'Luckiest Guy', 'Arial', sans-serif !important;
+}
+
 #game_grid {
   border: 2px tomato solid;
-  display:inline;
+  display: inline;
   min-width: 600px;
   min-height: 400px;
   margin: auto;
@@ -12,7 +21,7 @@ body {
   flex-wrap: wrap;
 }
 
-.card {
+.pokeCard {
   width: 120px;
   height: 120px;
   position: relative;
@@ -23,7 +32,10 @@ body {
 }
 
 .selected {
-  background-color: darkblue !important; 
+  background-color: #0d6efd !important;
+  /* Bootstrap blue */
+  color: #fff !important;
+  font-weight: 700 !important;
 }
 
 .powerup {
@@ -60,11 +72,90 @@ img {
 }
 
 /* When flipped, show the front face */
-.card.flip {
+.pokeCard.flip {
   transform: rotateY(180deg);
 }
 
-.row .card {
+.row .pokeCard {
   width: 150px;
   height: 150px;
+}
+
+/* Dark mode styles */
+body.dark-mode,
+body.dark-mode .container-xxl,
+body.dark-mode .container,
+body.dark-mode .powerup,
+body.dark-mode .table,
+body.dark-mode td,
+body.dark-mode .bg-light {
+  background-color: #181a1b !important;
+  color: #f1f1f1 !important;
+}
+
+body.dark-mode .btn,
+body.dark-mode .btn-outline-primary,
+body.dark-mode .btn-success,
+body.dark-mode .btn-danger,
+body.dark-mode .btn-dark {
+  background-color: #23272b !important;
+  color: #f1f1f1 !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode .btn.selected {
+  background-color: rgb(70, 72, 78) !important;
+  color: #f1f1f1 !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode #darkModeToggle {
+  background-color: #f1f1f1 !important;
+  color: #23272b !important;
+}
+
+body.dark-mode #darkModeToggle:hover {
+  background-color: #b4b4b4 !important;
+  color: #23272b !important;
+}
+
+body.dark-mode .btn:hover {
+  background-color: #343a40 !important;
+  color: #fff !important;
+}
+
+body.dark-mode .table,
+body.dark-mode .table-bordered {
+  background-color: #23272b !important;
+  color: #f1f1f1 !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode #powerupCount,
+body.dark-mode #powerupHeader {
+  color: #f1f1f1 !important;
+}
+
+body.dark-mode .card,
+body.dark-mode #timer,
+body.dark-mode .powerup,
+body.dark-mode #game_grid {
+  background-color: #23272b !important;
+  color: #f1f1f1 !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode .pokeCard {
+  background-color: #23272b !important;
+  border-color: #444 !important;
+}
+
+body.dark-mode .matched {
+  background-color: #0d6efd !important;
+  color: #fff !important;
+}
+
+body.dark-mode .front_face,
+body.dark-mode .back_face {
+  background-color: #23272b !important;
 }
