@@ -1,59 +1,42 @@
-let start = document.getElementById("start");
-let reset = document.getElementById("reset");
-let timer = document.getElementById("timer");
+let container = document.getElementById("game");
 let clicks = document.getElementById("clicks");
 let total = document.getElementById("total");
 let remaining = document.getElementById("remaining");
 let matched = document.getElementById("matched");
+let easy = document.getElementById("easy");
+let medium = document.getElementById("medium");
+let hard = document.getElementById("hard");
+let start = document.getElementById("start");
+let reset = document.getElementById("reset");
+let timer = document.getElementById("timer");
 let game = document.getElementById("game_grid");
 
 let rendered = false;
 let pokemonCount = 0;
 let rowCount = 0;
-let gameDifficulty = "";
+let colCount = 0;
+let gameDifficulty = null;
 
 let gameRunning = false;
 let time = 0;
 let countdown = 0;
 let cardsClicked = 0;
 let cardsMatched = 0;
-let timerPromise = null;
+let powerupCount = 1;
 
-function startTimer() {
-  countdown = time;
-  return new Promise(async (resolve) => {
-    while (gameRunning) {
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      if (countdown <= 0 && gameRunning) {
-        gameRunning = false;
-        alert("You ran out of time! Game over.");
-      } else if (gameRunning) {
-        console.log("subtracting");
-        countdown--;
-        timer.innerHTML = `<h1>Time: ${countdown}</h1>`;
-      }
-
-    }
-    resolve();
-  });
-
-}
-
-async function renderGame(pokemon, row, difficulty) {
+async function renderGame(pokemon, row, col, gameTime) {
 
   rendered = true;
-  gameDifficulty = difficulty;
   pokemonCount = pokemon;
   rowCount = row;
+  colCount = col;
+  time = gameTime;
   let cards = [];
-
-  game.innerHTML = "<h1>Loading...</h1>";
-  timer.innerHTML = `<h1>Time: ${time}</h1>`;
-  total.innerHTML = `<h3>Total Number of Pairs: ${pokemonCount}</h3>`;
-  remaining.innerHTML = `<h3>Number of Pairs Remaining: ${pokemonCount}</h3>`;
-
+  let loading = true;
+  loadingScreen();
+  timer.innerHTML = `<h3>Time: ${time}</h3>`;
+  total.innerHTML = `<h5>Total Number of Pairs: ${pokemonCount}</h5>`;
+  remaining.innerHTML = `<h5>Number of Pairs Remaining: ${pokemonCount}</h5>`;
 
   let result = await fetch(`https://pokeapi.co/api/v2/pokemon/?limit=1302`);
   let jsonObj = await result.json();
@@ -62,10 +45,26 @@ async function renderGame(pokemon, row, difficulty) {
     let card = document.createElement("div");
     card.classList.add(`img_${i + 1}`);
     card.classList.add("card");
+    card.classList.add("mx-2");
+
     let index = Math.floor(Math.random() * jsonObj.results.length);
 
-    let response2 = await fetch(`https://pokeapi.co/api/v2/pokemon/${jsonObj.results[index].name}`);
-    let jsonObj2 = await response2.json();
+    let jsonObj2;
+    while (true) {
+      try {
+      let response2 = await fetch(`https://pokeapi.co/api/v2/pokemon/${jsonObj.results[index].name}`);
+      if (response2.status === 429) {
+        // Too Many Requests, wait and try again
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        continue;
+      }
+      jsonObj2 = await response2.json();
+      break;
+      } catch (err) {
+      // Network or other error, wait and try again
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    }
     console.log(jsonObj2);
 
     card.innerHTML = `<img src="${jsonObj2.sprites.other['official-artwork'].front_default}" alt="${jsonObj2.name}" class="front_face">
@@ -73,10 +72,12 @@ async function renderGame(pokemon, row, difficulty) {
 
     cards.push(card);
 
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, 100));
   }
-
-  game.innerHTML = "";
+  loading = false;
+  if (game.innerHTML != "") {
+    game.innerHTML = "";
+  }
 
   for (let i = 0; i < rowCount; i++) {
     let row = document.createElement("div");
@@ -99,8 +100,7 @@ async function renderGame(pokemon, row, difficulty) {
   let cardIndex = 0;
   for (let rowNum = 1; rowNum <= rowCount; rowNum++) {
     let row = document.getElementById(`row_${rowNum}`);
-
-    for (let col = 0; col < pokemonCount; col++) {
+    for (let colNum = 0; colNum < colCount; colNum++) {
       let card = cardPairs[cardIndex].cloneNode(true);
       card.id = `card_${cardIndex + 1}`;
 
@@ -115,8 +115,21 @@ async function renderGame(pokemon, row, difficulty) {
       cardIndex++;
     }
   }
+
+  document.getElementById("powerupContainer").classList.toggle("invisible");
   gameRunning = true;
-  timerPromise = startTimer();
+  startTimer();
+
+  async function loadingScreen() {
+    dots = 0;
+    while (loading) {
+      dots = (dots) % 3 + 1;
+      let loading = "<h1>Loading" + ".".repeat(dots) + "</h1>";
+      game.innerHTML = loading;
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
 }
 
 let flipCount = 0;
@@ -126,89 +139,171 @@ let flipping = false;
 
 async function flip(id, className) {
 
-  if (finishedCards.includes(id)) {
-    console.log("That card is already finished.");
-  } else {
-
-    if (flipping || document.getElementById(id).classList.length >= 3) {
-      console.log("Already Flipped!");
+  if (gameRunning) {
+    if (finishedCards.includes(id)) {
+      console.log("That card is already finished.");
     } else {
 
-      cardsClicked++;
-      clicks.innerHTML = `<h3>Number of Clicks: ${cardsClicked}</h3>`;
+      if (flipping || document.getElementById(id).classList.length >= 4) {
+        console.log("Already Flipped!");
+      } else {
 
-      flipping = true;
+        cardsClicked++;
+        clicks.innerHTML = `<h5>Number of Clicks: ${cardsClicked}</h5>`;
 
-      console.log(`flipping: `, id);
-      selectedCards.push({ id, className });
+        flipping = true;
 
-      let card = document.getElementById(id);
-      card.classList.toggle("flip");
-      flipCount++;
+        console.log(`flipping: `, id);
+        selectedCards.push({ id, className });
 
-      if (flipCount % 2 == 0) {
-        let flip1 = selectedCards.pop();
-        let flip2 = selectedCards.pop();
-        console.log(flip1, flip2);
+        let card = document.getElementById(id);
+        card.classList.toggle("flip");
+        flipCount++;
 
-        if (flip1.className == flip2.className) {
-          finishedCards.push(flip1.id, flip2.id);
-          cardsMatched++;
-          remaining.innerHTML = `<h3>Number of Pairs Remaining: ${pokemonCount - cardsMatched}</h3>`;
-          matched.innerHTML = `<h3>Number of Pairs Matched: ${cardsMatched}</h3>`;
-          console.log("That's a match!");
+        if (flipCount % 2 == 0) {
+          let flip1 = selectedCards.pop();
+          let flip2 = selectedCards.pop();
+          console.log(flip1, flip2);
 
-        } else {
-          await new Promise(resolve => setTimeout(resolve, 1500));
           let card1 = document.getElementById(flip1.id);
           let card2 = document.getElementById(flip2.id);
-          if (card1) card1.classList.toggle("flip");
-          if (card2) card2.classList.toggle("flip");
-        }
 
-        if (finishedCards.length >= pokemonCount * 2) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
-          gameRunning = false;
-          alert("You've matched all of the cards! You win!");
+          if (flip1.className == flip2.className) {
+            finishedCards.push(flip1.id, flip2.id);
+            cardsMatched++;
+            remaining.innerHTML = `<h5>Number of Pairs Remaining: ${pokemonCount - cardsMatched}</h5>`;
+            matched.innerHTML = `<h5>Number of Pairs Matched: ${cardsMatched}</h5>`;
+            console.log("That's a match!");
+            if (card1) card1.classList.add("matched");
+            if (card2) card2.classList.add("matched");
+          } else {
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            if (card1) flipCard(card1);
+            if (card2) flipCard(card2);
+
+          }
+
+          if (finishedCards.length >= pokemonCount * 2) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            gameRunning = false;
+            alert("You've matched all of the cards! You win!");
+          }
         }
+        flipping = false;
       }
-      flipping = false;
     }
   }
 
 }
 
+function flipCard(card) {
+  card.classList.toggle("flip");
+}
+
+async function startTimer() {
+  countdown = time;
+
+  await new Promise(resolve => setTimeout(resolve, 1000));
+
+  while (gameRunning) {
+
+    if (countdown <= 0 && gameRunning) {
+      gameRunning = false;
+      alert("You ran out of time! Game over.");
+    } else if (gameRunning) {
+      console.log("subtracting");
+      countdown--;
+      timer.innerHTML = `<h3>Time: ${countdown}</h3>`;
+    }
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+}
+
 async function resetGame() {
   gameRunning = false;
-  game.innerHTML = "<h1>Loading...</h1>";
-  if (timerPromise) await timerPromise;
-  timer.innerHTML = `<h1>Time: ${time}</h1>`;
-  matched.innerHTML = `<h3>Number of Pairs Matched: 0`;
-  clicks.innerHTML = `<h3>Number of Clicks: 0</h3>`;
+  game.innerHTML = "<h3>Loading...</h3>";
+  timer.innerHTML = `<h3>Time: ${time}</h3>`;
+  matched.innerHTML = `<h5>Number of Pairs Matched: 0</h5>`;
+  clicks.innerHTML = `<h5>Number of Clicks: 0</h5>`;
   rendered = false;
   flipping = false;
   flipCount = 0;
   cardsClicked = 0;
   cardsMatched = 0;
+  powerupCount = 1;
   selectedCards = [];
   finishedCards = [];
-  renderGame(pokemonCount, rowCount, gameDifficulty);
+  gameStats = getDifficultyStats();
+  renderGame(gameStats.numPokemon, gameStats.numRows, gameStats.numCols, gameStats.time);
 }
 
-document.getElementById("start").addEventListener("click", async function () {
+async function flipPowerup() {
+  powerupCount--;
+  let cardsToFlip = document.querySelectorAll(".card:not(.matched)");
+  for (card of cardsToFlip) {
+    flipCard(card);
+  }
+  await new Promise(resolve => setTimeout(resolve, 2000));
+  for (card of cardsToFlip) {
+    flipCard(card);
+  }
+}
+
+function getDifficultyStats() {
+  if (gameDifficulty == "easy") {
+    return { numPokemon: 3, numRows: 2, numCols: 3, time: 30 };
+  } else if (gameDifficulty == "medium") {
+    return { numPokemon: 6, numRows: 3, numCols: 4, time: 40 };
+  } else if (gameDifficulty == "hard") {
+    return { numPokemon: 10, numRows: 4, numCols: 5, time: 50 };
+  }
+}
+
+function setDifficulty(difficulty, element) {
+  if (gameDifficulty == null) {
+    gameDifficulty = difficulty;
+    element.classList.toggle("selected");
+  } else if (gameDifficulty == difficulty) {
+    gameDifficulty = null;
+    element.classList.toggle("selected");
+  }
+}
+
+easy.addEventListener("click", async function () {
+  setDifficulty("easy", easy);
+});
+
+medium.addEventListener("click", async function () {
+  setDifficulty("medium", medium);
+});
+
+hard.addEventListener("click", async function () {
+  setDifficulty("hard", hard);
+});
+
+start.addEventListener("click", async function () {
   if (rendered) {
     alert("Game already started");
-    return;
+  } else if (!gameDifficulty) {
+    alert("You haven't selected a difficulty!");
   } else {
-    time = 30;
-    renderGame(3, 2, "easy");
+    gameStats = getDifficultyStats();
+    renderGame(gameStats.numPokemon, gameStats.numRows, gameStats.numCols, gameStats.time);
   }
 });
 
-document.getElementById("reset").addEventListener("click", async function () {
+reset.addEventListener("click", async function () {
   if (!rendered) {
     alert("There is no active game instance");
   } else {
     resetGame();
   }
+});
+
+document.getElementById("powerup").addEventListener("click", function () {
+  if (powerupCount > 0) {
+    flipPowerup();
+    document.getElementById("powerupCount").innerText = `${powerupCount} use(s) remaining`;
+  }
+
 });

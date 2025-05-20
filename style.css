@@ -4,21 +4,34 @@ body {
 
 #game_grid {
   border: 2px tomato solid;
-  width: 600px;
-  height: 400px;
+  display:inline;
+  min-width: 600px;
+  min-height: 400px;
   margin: auto;
   display: flex;
   flex-wrap: wrap;
 }
 
 .card {
-  width: 150px;
-  height: 150px;
+  width: 120px;
+  height: 120px;
   position: relative;
   transition: transform 1s;
   perspective: 1000px;
   transform-style: preserve-3d;
   display: inline-block;
+}
+
+.selected {
+  background-color: darkblue !important; 
+}
+
+.powerup {
+  width: 150px;
+}
+
+h5 {
+  margin-bottom: 0 !important;
 }
 
 img {

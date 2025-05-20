@@ -17,31 +17,63 @@
 
 <body>
 
-  <div id="body" class="container">
+  <div id="body" class="container-xxl">
 
-    <div id="control" class="container w-50 m-auto d-flex flex-column justify-content-center align-items-center">
+    <div id="control" class="container w-50 m-auto mt-3 d-flex flex-column justify-content-center align-items-center">
 
-      <div id="timer">
-        <h1>Time: 0</h1>
+      <div class="d-flex gap-2 mb-2">
+        <button id="easy" class="btn btn-primary">Easy</button>
+        <button id="medium" class="btn btn-primary">Intermediate</button>
+        <button id="hard" class="btn btn-primary">Hard</button>
       </div>
-      <div id="clicks">
-        <h3>Number of Clicks: 0</h3>
+      <div class="d-flex gap-2 mb-2">
+        <button id="start" class="btn btn-primary">Start</button>
+        <button id="reset" class="btn btn-danger">Reset</button>
       </div>
-      <div id="total">
-        <h3>Total Number of Pairs: 0</h3>
-      </div>
-      <div id="remaining">
-        <h3>Number of Pairs Remaining: 0</h3>
-      </div>
-            <div id="matched">
-        <h3>Number of Pairs Matched: 0</h3>
-      </div>
-      <button id="start" class="btn btn-primary">Start</button>
-      <button id="reset" class="btn btn-danger">Reset</button>
     </div>
 
-    <div id="game" class="container m-auto">
-      <div id="game_grid" class="d-flex flex-column flex-wrap justify-content-center text-center"></div>
+    <table class="table table-bordered w-75 m-auto mb-3 text-center">
+      <colgroup>
+        <col class="w-50">
+        <col style="width: 50%;">
+      </colgroup>
+      <tbody>
+        <tr>
+          <td id="clicks">
+            <h5>Number of Clicks: 0</h5>
+          </td>
+          <td id="total">
+            <h5>Total Number of Pairs: 0</h5>
+          </td>
+        </tr>
+        <tr>
+          <td id="remaining">
+            <h5>Number of Pairs Remaining: 0</h5>
+          </td>
+          <td id="matched">
+            <h5>Number of Pairs Matched: 0</h5>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div id="timer" class="text-center">
+      <h3>Time: 0</h3>
+    </div>
+
+    <div id="game" class="container-xxl mx-auto my-2 d-flex justify-content-center align-items-center">
+
+      <div class="me-3 powerup invisible">
+      </div>
+
+      <div id="game_grid" class="d-flex gap-3 p-3 m-0 flex-column flex-wrap justify-content-center text-center"></div>
+
+      <div id="powerupContainer" class="ms-3 text-center powerup invisible">
+        <h3>Powerup:</h3>
+        <h5 class="mb-2">View All Cards for 2 seconds</h5>
+        <p id="powerupCount" class="mb-2">1 use remaining</p>
+        <button id="powerup" class="btn btn-primary">Use</button>
+      </div>
     </div>
   </div>
 
