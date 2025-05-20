@@ -11,6 +11,32 @@ h6 {
   font-family: 'Luckiest Guy', 'Arial', sans-serif !important;
 }
 
+.text-primary,
+.btn-outline-primary {
+  color: rgb(86, 219, 175) !important;
+}
+
+.btn-outline-primary {
+  border-color: rgb(86, 219, 175);
+}
+
+.btn-outline-primary:hover {
+  border-color: rgb(86, 219, 175);
+  background-color: rgb(86, 219, 175);
+  color: rgb(255, 255, 255) !important;
+}
+
+.btn-outline-primary.selected {
+  border-color: rgb(76, 190, 152);
+  background-color: rgb(70, 182, 145) !important;
+  color: rgb(255, 255, 255) !important;
+}
+
+.btn-primary {
+  background-color: rgb(86, 219, 175) !important;
+  color: black;
+}
+
 #game_grid {
   border: 2px tomato solid;
   display: inline;
