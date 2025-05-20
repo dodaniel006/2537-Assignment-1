@@ -232,6 +232,7 @@ async function resetGame() {
   cardsClicked = 0;
   cardsMatched = 0;
   powerupCount = 1;
+  document.getElementById("powerupCount").innerText = `${powerupCount} use(s) remaining`;
   document.getElementById("powerupContainer").style.visibility = "hidden";
   selectedCards = [];
   finishedCards = [];
